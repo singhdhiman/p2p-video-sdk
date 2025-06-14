@@ -8,36 +8,40 @@ class PeerConnection {
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
-    // Setup incoming signal listener
+    // ✅ Register signal handler
     this.signaling.onSignal((from, data) => this.handleSignal(from, data));
+
+    // ✅ ICE candidate handler
+    this.peer.onicecandidate = (e) => {
+      if (e.candidate) {
+        console.log('📤 Sending ICE candidate');
+        this.signaling.sendSignal(from, { candidate: e.candidate });
+      }
+    };
+
+    // ✅ Remote track handler
+    this.peer.ontrack = (event) => {
+      console.log('🎥 Received remote track', event.streams[0]);
+      if (this.remoteVideoRef.current) {
+        this.remoteVideoRef.current.srcObject = event.streams[0];
+      }
+    };
   }
 
   async init(isCaller) {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     this.localVideoRef.current.srcObject = stream;
 
-    stream.getTracks().forEach(track => this.peer.addTrack(track, stream));
-
-    this.peer.onicecandidate = e => {
-      if (e.candidate) {
-        console.log('📤 Sending ICE candidate');
-        this.signaling.sendSignal(e.candidate);
-      }
-    };
-
-    this.peer.ontrack = event => {
-      console.log('🎥 Received remote track', event.streams[0]);
-      if (this.remoteVideoRef.current) {
-        this.remoteVideoRef.current.srcObject = event.streams[0]; // ✅ attach stream
-      }
-
-    };
+    // ✅ Add local stream tracks to peer connection
+    stream.getTracks().forEach((track) => {
+      this.peer.addTrack(track, stream);
+    });
 
     if (isCaller) {
       const offer = await this.peer.createOffer();
       await this.peer.setLocalDescription(offer);
       console.log('📤 Sending offer');
-      this.signaling.sendSignal(offer);
+      this.signaling.sendSignal(null, offer); // or provide target ID if needed
     }
   }
 
@@ -48,7 +52,7 @@ class PeerConnection {
       const answer = await this.peer.createAnswer();
       await this.peer.setLocalDescription(answer);
       console.log('📤 Sending answer');
-      this.signaling.sendSignal(answer);
+      this.signaling.sendSignal(from, answer);
     } else if (data.type === 'answer') {
       console.log('📥 Received answer');
       await this.peer.setRemoteDescription(new RTCSessionDescription(data));
