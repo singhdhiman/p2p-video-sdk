@@ -9,32 +9,48 @@ class SignalingClient {
     this.roomJoined = false;
   }
 
-  connect(roomId) {
-    return new Promise((resolve) => {
-      this.socket.on('joined', ({ peers }) => {
-        console.log("✅ Joined room. Peers:", peers);
-        if (peers.length > 0) {
-          this.peerId = peers[0]; // First peer in room
-          this.isInitiator = true;
-        }
-        this.roomJoined = true;
-        resolve();
-      });
+ connect(roomId) {
+  return new Promise((resolve) => {
+    // When successfully joined the room
+    this.socket.on('joined', ({ peers }) => {
+      console.log("✅ Joined room. Peers:", peers);
 
-      this.socket.on('new-peer', ({ id }) => {
-        console.log("👤 New peer joined:", id);
-        this.peerId = id; // Store peer ID when new peer joins
-      });
+      // If other peers are already in the room, pick the first one to connect
+      if (peers.length > 0) {
+        this.peerId = peers[0]; // Connect to the first peer
+        this.isInitiator = true;
+      }
 
-      this.socket.on('signal', ({ from, data }) => {
-        console.log('📩 Received signal:', from, data);
-        this.peerId = from; // Always update sender
-        this.signalCallback(from, data);
-      });
-
-      this.socket.emit('join', roomId);
+      this.roomJoined = true;
+      resolve();
     });
-  }
+
+    // When a new peer joins after you
+    this.socket.on('new-peer', ({ id }) => {
+      console.log("👤 New peer joined:", id);
+
+      // If I'm the initiator, and no peerId is set, set it to new peer
+      if (!this.peerId) {
+        this.peerId = id;
+      }
+    });
+
+    // When receiving a signal (offer/answer/ICE)
+    this.socket.on('signal', ({ from, data }) => {
+      console.log('📩 Received signal:', from, data);
+
+      // Always store who sent this signal
+      this.peerId = from;
+
+      // Trigger the callback in PeerConnection
+      this.signalCallback(from, data);
+    });
+
+    // Join the room
+    this.socket.emit('join', roomId);
+  });
+}
+
 
   onSignal(callback) {
     this.signalCallback = callback;

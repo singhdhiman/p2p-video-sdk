@@ -16,12 +16,15 @@ class PeerConnection {
       }
     };
 
-    this.peer.ontrack = (event) => {
-      if (this.remoteVideoRef.current) {
-        console.log("🎥 Setting remote stream");
-        this.remoteVideoRef.current.srcObject = event.streams[0];
-      }
-    };
+  this.peer.ontrack = (event) => {
+  const [stream] = event.streams;
+  if (stream && this.remoteVideoRef.current) {
+    console.log("🎥 Setting remote stream");
+    this.remoteVideoRef.current.srcObject = stream;
+  } else {
+    console.warn("⚠️ No remote stream available or video ref not ready.");
+  }
+};
 
     // Listen to signal messages
     this.signaling.onSignal((from, data) => this.handleSignal(from, data));
