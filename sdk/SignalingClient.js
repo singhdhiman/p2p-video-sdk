@@ -2,7 +2,8 @@ import { io } from 'socket.io-client';
 
 class SignalingClient {
   constructor() {
-    this.socket = io('http://192.168.1.139:5000');
+    // this.socket = io('http://192.168.1.139:5000');
+    this.socket = io('https://9078-180-188-247-192.ngrok-free.app');
     this.signalCallback = () => {};
     this.isInitiator = false;
     this.peerId = null;

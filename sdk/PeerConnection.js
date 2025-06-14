@@ -26,8 +26,11 @@ class PeerConnection {
     };
 
     this.peer.ontrack = event => {
-      console.log('🎥 Received remote track');
-      this.remoteVideoRef.current.srcObject = event.streams[0];
+      console.log('🎥 Received remote track', event.streams[0]);
+      if (this.remoteVideoRef.current) {
+        this.remoteVideoRef.current.srcObject = event.streams[0]; // ✅ attach stream
+      }
+
     };
 
     if (isCaller) {
