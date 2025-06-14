@@ -42,6 +42,7 @@ class PeerConnection {
 
   async handleSignal(from, data) {
     // Store remote user ID for ICE
+    console.log("📩 Received signal from:", from, data);
     this.remoteUserId = from;
 
     if (data.type === 'offer') {
