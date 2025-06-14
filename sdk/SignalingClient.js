@@ -41,4 +41,6 @@ class SignalingClient {
   }
 }
 
-export default SignalingClient;
+
+module.exports = SignalingClient;
+
