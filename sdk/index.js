@@ -3,14 +3,23 @@ const SignalingClient = require('./SignalingClient');
 
 let peerConn = null;
 
-const connect = async ({ roomId, localVideoRef, remoteVideoRef, isCaller }) => {
-  console.log("roomId, localVideoRef, remoteVideoRef, isCaller",roomId, localVideoRef, remoteVideoRef, isCaller)
+const connect = async (params) => {
+  // Defensive check: prevent incorrect usage
+  if (!params || typeof params !== 'object' || !params.roomId) {
+    console.error("🚫 Invalid connect() params:", params);
+    return;
+  }
+
+  const { roomId, localVideoRef, remoteVideoRef, isCaller } = params;
+  console.log("✅ connect() received:", roomId, localVideoRef, remoteVideoRef, isCaller);
+
   const signaling = new SignalingClient();
   peerConn = new PeerConnection(signaling, localVideoRef, remoteVideoRef);
 
   await signaling.connect(roomId);
   await peerConn.init(isCaller);
 };
+
 
 const disconnect = () => {
   if (peerConn) {
