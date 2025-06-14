@@ -5,10 +5,12 @@ class PeerConnection {
     this.remoteVideoRef = remoteVideoRef;
     this.remoteUserId = null;
 
-    this.peer = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    this.peer = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    });
 
     this.peer.onicecandidate = (e) => {
-      if (e.candidate && this.remoteUserId) {
+      if (e.candidate) {
         console.log('📤 Sending ICE candidate');
         this.signaling.sendSignal(this.remoteUserId, { candidate: e.candidate });
       }
@@ -16,11 +18,12 @@ class PeerConnection {
 
     this.peer.ontrack = (event) => {
       if (this.remoteVideoRef.current) {
+        console.log("🎥 Setting remote stream");
         this.remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
 
-    // Register signal listener
+    // Listen to signal messages
     this.signaling.onSignal((from, data) => this.handleSignal(from, data));
   }
 
@@ -36,19 +39,18 @@ class PeerConnection {
       const offer = await this.peer.createOffer();
       await this.peer.setLocalDescription(offer);
       console.log('📤 Sending offer');
-      this.signaling.sendSignal(null, offer); // null → server determines receiver
+      this.signaling.sendSignal(null, offer); // null means: use `peerId`
     }
   }
 
   async handleSignal(from, data) {
-    // Store remote user ID for ICE
-    console.log("📩 Received signal from:", from, data);
     this.remoteUserId = from;
 
     if (data.type === 'offer') {
       await this.peer.setRemoteDescription(new RTCSessionDescription(data));
       const answer = await this.peer.createAnswer();
       await this.peer.setLocalDescription(answer);
+      console.log("📤 Sending answer");
       this.signaling.sendSignal(from, answer);
     } else if (data.type === 'answer') {
       await this.peer.setRemoteDescription(new RTCSessionDescription(data));
@@ -61,6 +63,5 @@ class PeerConnection {
     this.peer?.close();
   }
 }
-
 
 module.exports = PeerConnection;
