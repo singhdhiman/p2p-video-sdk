@@ -46,6 +46,8 @@ class SignalingClient {
     console.log("📤 Sending signal to:", this.peerId, data);
     this.socket.emit('signal', { to: this.peerId, data });
   }
+
+  
 }
 
 module.exports = SignalingClient;

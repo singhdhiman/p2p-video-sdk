@@ -4,6 +4,7 @@ const SignalingClient = require('./SignalingClient');
 let peerConn = null;
 
 const connect = async ({ roomId, localVideoRef, remoteVideoRef, isCaller }) => {
+  console.log("roomId, localVideoRef, remoteVideoRef, isCaller",roomId, localVideoRef, remoteVideoRef, isCaller)
   const signaling = new SignalingClient();
   peerConn = new PeerConnection(signaling, localVideoRef, remoteVideoRef);
 
